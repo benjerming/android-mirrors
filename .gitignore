@@ -1,0 +1,52 @@
+# Binaries and build output
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+bin/
+dist/
+build/
+assassin-android-controller
+
+# Coverage and profiling
+*.coverprofile
+coverage.out
+cover.out
+cpu.out
+mem.out
+
+# Go workspace and vendoring (optional in many projects)
+go.work
+go.work.sum
+
+# Dependency directories (uncomment if you do not commit vendor/)
+# vendor/
+
+# Environment and local config
+.env
+.env.*
+*.local
+
+# Logs
+*.log
+logs/
+
+# IDE/editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+**/__debug_bin*
+
+/docs/*
+/temp*
+/output*
