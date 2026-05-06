@@ -3,6 +3,11 @@ import type {
   MirrorStatus,
   MirrorTransport,
 } from '@/lib/mirror/transport';
+import type { ControlFrame } from '@/lib/mirror/control-frame';
+import {
+  registerControlTransport,
+  unregisterControlTransport,
+} from '@/lib/mirror/transport-registry';
 
 const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_BACKOFF_MS = 1000; // 1s → 2s → 4s → 8s → 16s
@@ -116,6 +121,7 @@ export class WebSocketMirrorTransport implements MirrorTransport {
   private decoder: VideoDecoder | null = null;
   private decoderReady = false;
   private onUnauthorized?: () => void;
+  private currentInstanceId: number | null = null;
 
   constructor(opts?: { onUnauthorized?: () => void }) {
     this.onUnauthorized = opts?.onUnauthorized;
@@ -146,8 +152,24 @@ export class WebSocketMirrorTransport implements MirrorTransport {
       this.socket.close();
       this.socket = null;
     }
+    if (this.currentInstanceId !== null) {
+      unregisterControlTransport(this.currentInstanceId, this);
+      this.currentInstanceId = null;
+    }
     this.resetDecoder();
     this.setStatus('closed');
+  }
+
+  // sendControl 在 WS OPEN 时把控制帧序列化成 JSON 文本帧发出去。
+  // 未 OPEN 时静默丢弃，避免把过期的 move 排队后下发到设备。
+  sendControl(frame: ControlFrame): void {
+    const ws = this.socket;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    try {
+      ws.send(JSON.stringify(frame));
+    } catch {
+      // 写失败让 onclose / onerror 走重连，这里不再升级状态。
+    }
   }
 
   onStatusChange(cb: (s: MirrorStatus, err?: string) => void): () => void {
@@ -259,6 +281,7 @@ export class WebSocketMirrorTransport implements MirrorTransport {
   private openSocket() {
     if (!this.currentOpts) return;
     const { instanceId, fps, token } = this.currentOpts;
+    this.currentInstanceId = instanceId;
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
     // fmt=raw 让后端跳过 fMP4 muxer，直接发 13B header + Annex-B。后端 TODO。
     const url = `${proto}://${window.location.host}/api/v1/instances/${instanceId}/mirror/ws?token=${encodeURIComponent(token)}&fps=${fps}&fmt=raw`;
@@ -268,9 +291,11 @@ export class WebSocketMirrorTransport implements MirrorTransport {
       ws.binaryType = 'arraybuffer';
       ws.onopen = () => {
         this.reconnectAttempts = 0;
+        registerControlTransport(instanceId, this);
         this.setStatus('open');
       };
       ws.onclose = (ev) => {
+        unregisterControlTransport(instanceId, this);
         if (typeof ev.reason === 'string' && ev.reason.includes('auth')) {
           this.setStatus('error', 'auth');
           this.onUnauthorized?.();

@@ -1,18 +1,20 @@
 import { LoaderCircle, Play, Square } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import type { GroupInstance } from '@/generated/types';
 import { useStartInstance, useStopInstance } from '@/features/instance/mutations';
 import { readSessionToken } from '@/features/session/api';
-import { dispatchTap } from '@/lib/control/dispatch';
+import { useTouchGesture } from '@/features/mirror/hooks/useTouchGesture';
+import type { ControlFrame } from '@/lib/mirror/control-frame';
+import { getControlTransport } from '@/lib/mirror/transport-registry';
 import { WebSocketMirrorTransport } from '@/lib/mirror/websocket';
 import { useMirrorStore } from '@/stores/mirror';
 
 interface MirrorScreenProps {
   instance: GroupInstance;
   groupId: number;
-  // resolveTapTargets 由父级注入：根据当前 mode 决定这次点击要 fanout 给哪些实例。
+  // resolveTapTargets 由父级注入：根据当前 mode 决定这次手势要 fanout 给哪些实例。
   // broadcast 模式下返回所有 running 实例；single 模式下只返回 [self]。
   resolveTapTargets: (selfId: number) => number[];
   highlighted?: boolean;
@@ -45,34 +47,77 @@ export function MirrorScreen({
     };
   }, [instance.id, isRunning, setStatus]);
 
-  function handleCanvasPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
-    const canvas = canvasRef.current;
-    if (!canvas || !canvas.width || !canvas.height) return;
-    const rect = canvas.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
-    // object-contain 在 canvas intrinsic 比例和容器比例不一致时留黑边——按实际显示区域换算坐标。
-    const containerRatio = rect.width / rect.height;
-    const frameRatio = canvas.width / canvas.height;
-    let displayW = rect.width;
-    let displayH = rect.height;
-    let offsetX = 0;
-    let offsetY = 0;
-    if (containerRatio > frameRatio) {
-      displayW = rect.height * frameRatio;
-      offsetX = (rect.width - displayW) / 2;
-    } else if (containerRatio < frameRatio) {
-      displayH = rect.width / frameRatio;
-      offsetY = (rect.height - displayH) / 2;
-    }
-    const localX = e.clientX - rect.left - offsetX;
-    const localY = e.clientY - rect.top - offsetY;
-    if (localX < 0 || localY < 0 || localX > displayW || localY > displayH) return;
-    const deviceX = (localX / displayW) * canvas.width;
-    const deviceY = (localY / displayH) * canvas.height;
-    const targets = resolveTapTargets(instance.id);
-    if (targets.length === 0) return;
-    dispatchTap(targets, deviceX, deviceY);
+  // send 由 gesture hook 调用：按当前 mode fan-out 到目标实例对应的 WS。
+  const send = useCallback(
+    (frame: ControlFrame) => {
+      const targets = resolveTapTargets(instance.id);
+      for (const id of targets) {
+        const t = getControlTransport(id);
+        if (t) t.sendControl(frame);
+      }
+    },
+    [instance.id, resolveTapTargets],
+  );
+
+  const gesture = useTouchGesture({ send });
+
+  // toDeviceCoords 把 canvas 像素坐标按 object-contain 的 letterbox 偏移换算
+  // 成镜像分辨率坐标（scrcpy 内部再缩放回设备原生分辨率）。返回 null 表示
+  // 手指落在了 letterbox 黑边外，应忽略。
+  const toDeviceCoords = useCallback(
+    (e: React.PointerEvent<HTMLCanvasElement>): { x: number; y: number } | null => {
+      const canvas = canvasRef.current;
+      if (!canvas || !canvas.width || !canvas.height) return null;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return null;
+      const containerRatio = rect.width / rect.height;
+      const frameRatio = canvas.width / canvas.height;
+      let displayW = rect.width;
+      let displayH = rect.height;
+      let offsetX = 0;
+      let offsetY = 0;
+      if (containerRatio > frameRatio) {
+        displayW = rect.height * frameRatio;
+        offsetX = (rect.width - displayW) / 2;
+      } else if (containerRatio < frameRatio) {
+        displayH = rect.width / frameRatio;
+        offsetY = (rect.height - displayH) / 2;
+      }
+      const localX = e.clientX - rect.left - offsetX;
+      const localY = e.clientY - rect.top - offsetY;
+      if (localX < 0 || localY < 0 || localX > displayW || localY > displayH) return null;
+      return {
+        x: (localX / displayW) * canvas.width,
+        y: (localY / displayH) * canvas.height,
+      };
+    },
+    [],
+  );
+
+  function handleDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    const c = toDeviceCoords(e);
+    if (!c) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    gesture.onPointerDown(c.x, c.y);
     onSelect?.(instance.id);
+  }
+  function handleMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    const c = toDeviceCoords(e);
+    if (!c) return;
+    gesture.onPointerMove(c.x, c.y);
+  }
+  function handleUp(e: React.PointerEvent<HTMLCanvasElement>) {
+    const c = toDeviceCoords(e);
+    if (c) gesture.onPointerUp(c.x, c.y);
+    else gesture.onPointerCancel();
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // 已释放或浏览器不支持时忽略。
+    }
+  }
+  function handleCancel() {
+    gesture.onPointerCancel();
   }
 
   return (
@@ -86,8 +131,11 @@ export function MirrorScreen({
         {isRunning ? (
           <canvas
             ref={canvasRef}
-            onPointerDown={handleCanvasPointerDown}
-            className="h-full w-full object-contain bg-black"
+            onPointerDown={handleDown}
+            onPointerMove={handleMove}
+            onPointerUp={handleUp}
+            onPointerCancel={handleCancel}
+            className="h-full w-full object-contain bg-black touch-none"
           />
         ) : (
           <div className="text-stone-400">

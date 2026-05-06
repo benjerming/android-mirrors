@@ -203,7 +203,7 @@ func NewApp(ctx context.Context, configPath string, assets http.FileSystem) (*Ap
 		Artifact:    httpapi.NewArtifactHandler(artifactService),
 		App:         httpapi.NewAppHandler(appService),
 		Control:     httpapi.NewControlHandler(controlService),
-		Mirror:      httpapi.NewMirrorHandler(mirrorService),
+		Mirror:      httpapi.NewMirrorHandler(mirrorService, controlService),
 		File:        httpapi.NewFileHandler(fileService),
 		ScrcpyDebug: httpapi.NewScrcpyDebugHandler(scrcpySessions),
 	}, assets, logg)
