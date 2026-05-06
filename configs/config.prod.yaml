@@ -1,0 +1,19 @@
+app:
+  name: assassin-android-controller
+  env: prod
+  http_port: 8080
+
+database:
+  path: data/assassin-controller.db
+
+# session.secret 用来给登录 token 做 HMAC 签名。
+# 生产环境强烈建议改用环境变量 APP_SESSION_SECRET 注入，不要把真实密钥写进版本库。
+session:
+  secret: change-me-please-use-env-APP_SESSION_SECRET
+
+templates_file: config.json
+
+templates:
+  - name: pixel-8
+    description: Pixel 8 API 34
+    system_image: system-images;android-34;google_apis;x86_64

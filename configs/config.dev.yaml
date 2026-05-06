@@ -1,0 +1,17 @@
+app:
+  name: assassin-android-controller
+  env: dev
+  http_port: 8080
+
+database:
+  path: data/assassin-controller-dev.db
+
+session:
+  secret: dev-only-do-not-use-in-prod
+
+templates_file: config.json
+
+templates:
+  - name: pixel-8
+    description: Pixel 8 API 34
+    system_image: system-images;android-34;google_apis;x86_64

@@ -1,0 +1,9 @@
+packages:
+  - path: assassin-android-controller/internal/interfaces/httpapi
+    output_path: web/src/generated/types.ts
+    include_files:
+      - "*_dto.go"
+  - path: assassin-android-controller/internal/domain/profile
+    output_path: web/src/generated/types.ts
+  - path: assassin-android-controller/internal/domain/language
+    output_path: web/src/generated/types.ts

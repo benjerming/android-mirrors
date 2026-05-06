@@ -11,6 +11,13 @@ dist/
 build/
 assassin-android-controller
 
+# cmd/server/dist 是 //go:embed 的目标目录：dev 时只有 .gitkeep 占位，
+# build 阶段才会临时把 web/dist 拷过来。这里反向放行 .gitkeep，让它能进版本库，
+# 但仍然忽略其它一切真实构建产物。
+!cmd/server/dist/
+cmd/server/dist/*
+!cmd/server/dist/.gitkeep
+
 # Coverage and profiling
 *.coverprofile
 coverage.out
@@ -50,3 +57,5 @@ Thumbs.db
 /docs/*
 /temp*
 /output*
+/data
+/.tmp

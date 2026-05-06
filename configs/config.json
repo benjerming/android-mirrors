@@ -1,0 +1,164 @@
+{
+  "systemImage": "system-images;android-34;google_apis;x86_64",
+  "avdProfiles": [
+    {
+      "id": "Mirrors_HUAWEI_P8",
+      "device": "small_phone",
+      "displayName": "HUAWEI P8 (720x1280)",
+      "resolution": "720x1280",
+      "density": 320
+    },
+    {
+      "id": "Mirrors_Pixel_XL",
+      "device": "medium_phone",
+      "displayName": "Pixel XL (1440x2560)",
+      "resolution": "1440x2560",
+      "density": 560
+    },
+    {
+      "id": "Mirrors_Tablet",
+      "device": "medium_tablet",
+      "displayName": "平板 (1200x1920)",
+      "resolution": "1200x1920",
+      "density": 320
+    },
+    {
+      "id": "Mirrors_Xperia_XZ",
+      "device": "medium_phone",
+      "displayName": "Xperia XZ (1080x1920)",
+      "resolution": "1080x1920",
+      "density": 480
+    },
+    {
+      "id": "Mirrors_OPPO_Find_X5_Pro",
+      "device": "medium_phone",
+      "displayName": "OPPO Find X5 Pro (1440x3216)",
+      "resolution": "1440x3216",
+      "density": 480
+    },
+    {
+      "id": "Mirrors_Galaxy_Z_Fold4_expand",
+      "device": "7.6in Foldable",
+      "displayName": "Galaxy Z Fold4 展开 (1812x2176)",
+      "resolution": "1812x2176",
+      "density": 374
+    },
+    {
+      "id": "Mirrors_Galaxy_Z_Fold4_collapse",
+      "device": "medium_phone",
+      "displayName": "Galaxy Z Fold4 折叠 (904x2316)",
+      "resolution": "904x2316",
+      "density": 425
+    },
+    {
+      "id": "Mirrors_HUAWEI_P8_2",
+      "device": "small_phone",
+      "displayName": "HUAWEI P8 2 (720x1280)",
+      "resolution": "720x1280",
+      "density": 320
+    },
+    {
+      "id": "Mirrors_HUAWEI_P8_3",
+      "device": "small_phone",
+      "displayName": "HUAWEI P8 3 (720x1280)",
+      "resolution": "720x1280",
+      "density": 320
+    },
+    {
+      "id": "Mirrors_HUAWEI_P8_4",
+      "device": "small_phone",
+      "displayName": "HUAWEI P8 4 (720x1280)",
+      "resolution": "720x1280",
+      "density": 320
+    },
+    {
+      "id": "Mirrors_HUAWEI_P8_5",
+      "device": "small_phone",
+      "displayName": "HUAWEI P8 5 (720x1280)",
+      "resolution": "720x1280",
+      "density": 320
+    }
+  ],
+  "languages": [
+    {
+      "code": "zh-CN",
+      "label": "简体中文"
+    },
+    {
+      "code": "zh-HK",
+      "label": "繁体中文"
+    },
+    {
+      "code": "en-US",
+      "label": "英语"
+    },
+    {
+      "code": "ru-RU",
+      "label": "俄语"
+    },
+    {
+      "code": "fr-FR",
+      "label": "法语"
+    },
+    {
+      "code": "de-DE",
+      "label": "德语"
+    },
+    {
+      "code": "id-ID",
+      "label": "印尼语"
+    },
+    {
+      "code": "ar-SA",
+      "label": "阿拉伯语(RTL)"
+    },
+    {
+      "code": "fa-IR",
+      "label": "波斯语(RTL)"
+    },
+    {
+      "code": "bn-BD",
+      "label": "孟加拉语"
+    },
+    {
+      "code": "es-ES",
+      "label": "西班牙语(西班牙)"
+    },
+    {
+      "code": "es-MX",
+      "label": "西班牙语(墨西哥)"
+    },
+    {
+      "code": "hi-IN",
+      "label": "印地语"
+    },
+    {
+      "code": "it-IT",
+      "label": "意大利语"
+    },
+    {
+      "code": "ms-MY",
+      "label": "马来西亚语"
+    },
+    {
+      "code": "pt-BR",
+      "label": "葡萄牙语(巴西)"
+    },
+    {
+      "code": "ro-RO",
+      "label": "罗马尼亚语"
+    },
+    {
+      "code": "th-TH",
+      "label": "泰语"
+    },
+    {
+      "code": "tr-TR",
+      "label": "土耳其语"
+    },
+    {
+      "code": "vi-VN",
+      "label": "越南语"
+    }
+  ]
+}

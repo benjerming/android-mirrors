@@ -1,0 +1,67 @@
+# golangci-lint v2 配置文件。
+#
+# v2 与 v1 的主要差异：
+#   - 顶层多了 version: "2"，必须显式声明。
+#   - linters.disable-all 改成 linters.default: none（none/standard/all/fast）。
+#   - 旧的 linters-settings 顶层 key 收进了 linters.settings。
+#   - 旧的 issues.exclude-rules 改成 linters.exclusions.rules。
+#   - 格式化类 linter（gofmt/goimports/gofumpt 等）拆到独立的 formatters 段，
+#     由 `golangci-lint fmt` 子命令运行；普通 lint 不再混跑格式化。
+#
+# 想跑：`make lint-backend` 或 `golangci-lint run --build-tags dev ./...`
+# 想格式化：`golangci-lint fmt ./...`
+
+version: "2"
+
+run:
+  timeout: 3m
+
+# 默认情况下 golangci-lint 会限制"每个 linter 最多 50 条、相同问题最多 3 条"，
+# 容易让人误以为"修了 3 条又冒 3 条"。这里放开限制，所有问题一次性暴露。
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  # default: none 表示不开任何默认 linter，下面 enable 列什么才启用什么——可控性最强。
+  default: none
+  enable:
+    - errcheck     # 检查没处理的 error 返回值
+    - govet        # 标准库自带的静态分析
+    - ineffassign  # 检查无效赋值
+    - staticcheck  # 综合性静态分析（v2 已合并 simple/stylecheck/unused 的相关检查项）
+    - unused       # 检查未使用的变量、字段、函数
+    - misspell     # 抓注释/字符串里的英文拼写错误
+    - revive       # 替代 golint 的风格检查
+    - bodyclose    # 检查 http.Response.Body 没关
+    - gocritic     # 偏经验式的代码风格建议
+
+  settings:
+    revive:
+      rules:
+        - name: var-naming
+        - name: package-comments
+        - name: exported
+          arguments:
+            - "checkPrivateReceivers"
+            - "disableStutteringCheck"
+
+  # v2 把忽略规则收到 linters.exclusions 之下，issues.exclude-rules 已不再支持。
+  exclusions:
+    rules:
+      # 测试文件允许使用全局变量、长函数等，避免噪音盖过真正的问题。
+      - path: _test\.go
+        linters:
+          - revive
+          - gocritic
+
+# v2 把格式化器单独拎出来：lint 不再触发自动格式化，要格式化请跑 `golangci-lint fmt`。
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      # 让本仓库的 import 单独分一组，便于一眼看出是项目内还是第三方依赖。
+      local-prefixes:
+        - assassin-android-controller
